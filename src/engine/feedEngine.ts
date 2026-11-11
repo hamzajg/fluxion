@@ -78,11 +78,12 @@ export function rankFeed(
   options: RankOptions = {},
 ): RankedItem[] {
   const now = options.now ?? Date.now();
+  const scorer = options.ranker ?? scoreItem;
   const excluded = new Set((intent.excludeTags ?? []).map((t) => t.toLowerCase()));
 
   const ranked = items
     .filter((item) => !item.tags.some((tag) => excluded.has(tag.toLowerCase())))
-    .map((item) => scoreItem(item, intent, signals, now))
+    .map((item) => scorer(item, intent, signals, now))
     .sort((a, b) => b.score - a.score);
 
   if (options.limit === undefined) return ranked;

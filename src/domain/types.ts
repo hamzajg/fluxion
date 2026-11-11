@@ -40,9 +40,23 @@ export interface RankedItem {
   reasons: string[];
 }
 
+/**
+ * A scoring function: turn one candidate into a scored, explained item.
+ * The default is the built-in weighted scorer; pass your own via
+ * `RankOptions.ranker` to plug in a different ranking strategy.
+ */
+export type Ranker = (
+  item: ContentItem,
+  intent: Intent,
+  signals: Signal[],
+  now: number,
+) => RankedItem;
+
 export interface RankOptions {
   /** Maximum number of items to return. Defaults to all. */
   limit?: number;
   /** Reference time for decay calculations. Defaults to Date.now(). */
   now?: number;
+  /** Custom scorer. Defaults to the built-in weighted scorer (`scoreItem`). */
+  ranker?: Ranker;
 }

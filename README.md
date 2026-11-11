@@ -39,6 +39,23 @@ const feed = rankFeed(items, { id: 'i1', topics: ['ai', 'agents'] }, signals.all
 // => [{ item, score, reasons: ['topic 2/2', 'engagement', 'fresh'] }, ...]
 ```
 
+### Custom rankers
+
+The built-in scorer can be replaced with any function that maps a candidate to
+a score and reasons. Exclusions and `limit` still apply around it.
+
+```ts
+import { rankFeed, type Ranker } from 'fluxion';
+
+const byTitleLength: Ranker = (item) => ({
+  item,
+  score: item.title.length,
+  reasons: ['headline length'],
+});
+
+const feed = rankFeed(items, intent, signals.all(), { ranker: byTitleLength });
+```
+
 ## Development
 
 ```bash
@@ -49,8 +66,8 @@ npm run build     # tsc -> dist/
 
 ## Status
 
-Early. The ranking core and signal store are implemented and tested; storage,
-HTTP surface, and pluggable rankers are next.
+Early. The ranking core, pluggable rankers, and signal store are implemented and
+tested; storage and an HTTP surface are next.
 
 ## License
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ContentItem, Intent } from '../src/domain/types.js';
+import type { ContentItem, Intent, RankedItem, Ranker } from '../src/domain/types.js';
 import { rankFeed, scoreItem } from '../src/engine/feedEngine.js';
 import { SignalStore } from '../src/engine/signalStore.js';
 
@@ -99,5 +99,43 @@ describe('SignalStore', () => {
 
     store.clear();
     expect(store.size).toBe(0);
+  });
+});
+
+describe('pluggable rankers', () => {
+  it('uses a custom ranker to score and order items', () => {
+    const byTitleLength: Ranker = (i) => ({ item: i, score: i.title.length, reasons: ['custom'] });
+
+    const ranked = rankFeed(
+      [
+        { ...item('short', []), title: 'Hi' },
+        { ...item('long', []), title: 'A much longer headline' },
+      ],
+      intent,
+      [],
+      { now: NOW, ranker: byTitleLength },
+    );
+
+    expect(ranked[0].item.id).toBe('long');
+    expect(ranked.every((r) => r.reasons.includes('custom'))).toBe(true);
+  });
+
+  it('still applies exclusions and limit around a custom ranker', () => {
+    const constant: Ranker = (i): RankedItem => ({ item: i, score: 1, reasons: [] });
+
+    const ranked = rankFeed(
+      [item('a', ['ai']), item('b', ['ai', 'sponsored']), item('c', ['ai'])],
+      { ...intent, excludeTags: ['sponsored'] },
+      [],
+      { now: NOW, ranker: constant, limit: 1 },
+    );
+
+    expect(ranked.map((r) => r.item.id)).toEqual(['a']);
+  });
+
+  it('defaults to the built-in scorer when no ranker is given', () => {
+    const ranked = rankFeed([item('x', ['ai', 'agents'])], intent, [], { now: NOW });
+
+    expect(ranked[0].reasons).toContain('topic 2/2');
   });
 });

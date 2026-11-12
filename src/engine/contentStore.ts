@@ -75,5 +75,21 @@ export class ContentStore {
   get size(): number {
     return this.items.size;
   }
+
+  /**
+   * The catalogue as a plain JSON-safe array — what a caller persists.
+   */
+  serialize(): ContentItem[] {
+    return this.all();
+  }
+
+  /**
+   * Rebuild the store (items *and* the tag index) from serialized data.
+   * Existing content is replaced wholesale: the snapshot is the truth.
+   */
+  restore(items: ContentItem[]): void {
+    this.clear();
+    this.addMany(items);
+  }
 }
 

@@ -30,7 +30,27 @@ Each factor is weighted by the intent, so the same catalogue can serve a
 ## Usage
 
 ```ts
-import { rankFeed, SignalStore } from 'fluxion';
+import { FeedService } from 'fluxion';
+
+const feedService = new FeedService();
+feedService.addContent({
+  id: 'article-1',
+  title: 'Autonomous Agents in Practice',
+  body: '...',
+  tags: ['ai', 'agents'],
+  createdAt: Date.now(),
+});
+
+feedService.recordSignal({ contentId: 'article-1', kind: 'like', at: Date.now() });
+
+const feed = feedService.rank({ id: 'reader-1', topics: ['ai'] });
+// => [{ item, score, reasons: ['topic 1/1', 'engagement', 'fresh'] }]
+```
+
+You can also use the standalone ranking core and signal store directly:
+
+```ts
+import { rankFeed, SignalStore, ContentStore } from 'fluxion';
 
 const signals = new SignalStore();
 signals.record({ contentId: 'a', kind: 'like', at: Date.now() });

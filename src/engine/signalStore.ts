@@ -36,4 +36,20 @@ export class SignalStore {
   get size(): number {
     return this.signals.length;
   }
+
+  /**
+   * The signal log as a plain JSON-safe array, in insertion order — what a
+   * caller persists. Order matters: `all()` feeds the ranking core.
+   */
+  serialize(): Signal[] {
+    return this.all();
+  }
+
+  /**
+   * Replace the log from serialized data. Existing signals are dropped:
+   * the snapshot is the truth.
+   */
+  restore(signals: Signal[]): void {
+    this.signals = [...signals];
+  }
 }

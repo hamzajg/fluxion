@@ -76,6 +76,21 @@ const byTitleLength: Ranker = (item) => ({
 const feed = rankFeed(items, intent, signals.all(), { ranker: byTitleLength });
 ```
 
+### Persistence
+
+Both stores serialize to plain JSON-safe data. `FeedService.snapshot()` captures
+the catalogue *and* the signal log; `restore()` rebuilds both — the tag index
+included — so ranking behaves identically after a round trip through
+`JSON.stringify`/`JSON.parse`, a file, or a database row.
+
+```ts
+const snapshot = feedService.snapshot();
+// ... persist `JSON.stringify(snapshot)` anywhere ...
+
+const restored = new FeedService();
+restored.restore(JSON.parse(saved));
+```
+
 ## Development
 
 ```bash
@@ -86,8 +101,9 @@ npm run build     # tsc -> dist/
 
 ## Status
 
-Early. The ranking core, pluggable rankers, and signal store are implemented and
-tested; storage and an HTTP surface are next.
+Early. The ranking core, pluggable rankers, signal store, and JSON
+snapshot/restore persistence are implemented and tested; an HTTP surface is
+next.
 
 ## License
 

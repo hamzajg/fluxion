@@ -24,6 +24,13 @@ export interface Signal {
 
 export interface Intent {
   id: string;
+  /**
+   * The reader this ranking is for. When set, signals recorded by other
+   * actors are ignored — another reader's views must not mark content as
+   * "seen" or boost its engagement for this reader. Signals without an
+   * `actorId` are global and always count.
+   */
+  actorId?: string;
   /** Topics the reader cares about; matched against item tags. */
   topics: string[];
   /** Tags to exclude entirely. */

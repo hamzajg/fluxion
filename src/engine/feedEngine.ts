@@ -29,6 +29,15 @@ function noveltyScore(signals: Signal[]): number {
   return 1 / (1 + seen / VIEWS_FOR_FULL_PENALTY);
 }
 
+/** A signal counts for this intent unless it belongs to a different actor. */
+function actorVisible(signal: Signal, intent: Intent): boolean {
+  return (
+    intent.actorId === undefined ||
+    signal.actorId === undefined ||
+    signal.actorId === intent.actorId
+  );
+}
+
 export function scoreItem(
   item: ContentItem,
   intent: Intent,
@@ -43,7 +52,9 @@ export function scoreItem(
   const topicScore = topics.length === 0 ? 0 : matches / topics.length;
   if (matches > 0) reasons.push(`topic ${matches}/${topics.length}`);
 
-  const own = signals.filter((s) => s.contentId === item.id);
+  const own = signals.filter(
+    (s) => s.contentId === item.id && actorVisible(s, intent),
+  );
 
   const engagement = engagementScore(own, now);
   if (engagement > 0.01) reasons.push('engagement');
@@ -81,9 +92,14 @@ export function rankFeed(
   const scorer = options.ranker ?? scoreItem;
   const excluded = new Set((intent.excludeTags ?? []).map((t) => t.toLowerCase()));
 
+  // Per-reader ranking: another actor's history must not leak into this
+  // reader's novelty/engagement. Unattributed signals are global. Custom
+  // rankers receive the same actor-filtered view.
+  const relevant = signals.filter((s) => actorVisible(s, intent));
+
   const ranked = items
     .filter((item) => !item.tags.some((tag) => excluded.has(tag.toLowerCase())))
-    .map((item) => scorer(item, intent, signals, now))
+    .map((item) => scorer(item, intent, relevant, now))
     .sort((a, b) => b.score - a.score);
 
   if (options.limit === undefined) return ranked;

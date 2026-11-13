@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ContentItem, Intent, RankedItem, Ranker } from '../src/domain/types.js';
+import type { ContentItem, Intent, RankedItem, Ranker, Signal } from '../src/domain/types.js';
 import { rankFeed, scoreItem } from '../src/engine/feedEngine.js';
 import { SignalStore } from '../src/engine/signalStore.js';
 
@@ -137,5 +137,59 @@ describe('pluggable rankers', () => {
     const ranked = rankFeed([item('x', ['ai', 'agents'])], intent, [], { now: NOW });
 
     expect(ranked[0].reasons).toContain('topic 2/2');
+  });
+});
+
+describe('actor-scoped ranking', () => {
+  const alice: Intent = { ...intent, actorId: 'alice' };
+  const bob: Intent = { ...intent, actorId: 'bob' };
+
+  const views: Signal[] = [1, 2, 3, 4].map((i) => ({
+    contentId: 'x',
+    kind: 'view' as const,
+    at: NOW - i * DAY,
+    actorId: 'alice',
+  }));
+
+  it('hides another actor\'s history from novelty and engagement', () => {
+    const forAlice = scoreItem(item('x', []), alice, views, NOW);
+    const forBob = scoreItem(item('x', []), bob, views, NOW);
+
+    expect(forAlice.reasons).toContain('seen before');
+    expect(forBob.reasons).not.toContain('seen before');
+    // Alice's views still count as (mild) engagement for Alice only.
+    expect(forAlice.reasons).toContain('engagement');
+    expect(forBob.reasons).not.toContain('engagement');
+  });
+
+  it('keeps unattributed signals visible to every actor', () => {
+    const global: Signal[] = [
+      { contentId: 'x', kind: 'like', at: NOW },
+    ];
+
+    const forBob = scoreItem(item('x', []), bob, global, NOW);
+
+    expect(forBob.reasons).toContain('engagement');
+  });
+
+  it('ranks the whole feed per actor through rankFeed', () => {
+    const signals = [
+      ...views,
+      { contentId: 'y', kind: 'like' as const, at: NOW, actorId: 'bob' },
+    ];
+
+    const forBob = rankFeed([item('x', []), item('y', [])], bob, signals, { now: NOW });
+    const forAlice = rankFeed([item('x', []), item('y', [])], alice, signals, { now: NOW });
+
+    // Bob liked y; Alice's four views on x must not leak into Bob's feed.
+    expect(forBob[0].item.id).toBe('y');
+    // For Alice, y's like is invisible and x is "seen before".
+    expect(forAlice.map((r) => r.item.id)).toEqual(['x', 'y']);
+  });
+
+  it('treats a missing actorId as the global feed (backwards compatible)', () => {
+    const ranked = rankFeed([item('x', [])], intent, views, { now: NOW });
+
+    expect(ranked[0].reasons).toContain('seen before');
   });
 });

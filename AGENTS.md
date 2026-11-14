@@ -29,7 +29,9 @@ No lint/format tooling configured. No env vars, no services.
   `Intent`, feed entry/result shapes. The public vocabulary; change carefully.
 - `src/engine/feedEngine.ts` — pure ranking core (`rankFeed`): topic match,
   recency-decayed engagement, freshness decay, novelty penalty, weighted by
-  intent. No I/O.
+  intent. No I/O. `scoreItem` also returns `scoreParts` (per-component
+  weighted contributions that sum to `score`) for explainability; custom
+  `Ranker`s may omit it.
 - `src/engine/signalStore.ts` — in-memory signal store (`SignalStore`).
 - `src/engine/contentStore.ts` — in-memory content store (`ContentStore`).
 - `src/engine/feedService.ts` — `FeedService` façade composing the stores

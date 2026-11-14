@@ -41,10 +41,20 @@ export interface Intent {
   novelty?: number;
 }
 
+/** Weighted contribution of each signal to a `RankedItem.score`. */
+export interface ScoreParts {
+  topic: number;
+  engagement: number;
+  freshness: number;
+  novelty: number;
+}
+
 export interface RankedItem {
   item: ContentItem;
   score: number;
   reasons: string[];
+  /** Present when scored by the built-in `scoreItem`; parts sum to `score`. */
+  scoreParts?: ScoreParts;
 }
 
 /**

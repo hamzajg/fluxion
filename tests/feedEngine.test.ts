@@ -193,3 +193,27 @@ describe('actor-scoped ranking', () => {
     expect(ranked[0].reasons).toContain('seen before');
   });
 });
+
+describe('scoreItem scoreParts', () => {
+  it('parts sum to the total score', () => {
+    const signals = [
+      { contentId: 'x', kind: 'like' as const, at: NOW },
+      { contentId: 'x', kind: 'view' as const, at: NOW },
+    ];
+    const ranked = scoreItem(item('x', ['ai'], 1), intent, signals, NOW);
+
+    const parts = ranked.scoreParts;
+    expect(parts).toBeDefined();
+    const sum = parts!.topic + parts!.engagement + parts!.freshness + parts!.novelty;
+    expect(sum).toBeCloseTo(ranked.score, 10);
+  });
+
+  it('topic part reflects full topic match', () => {
+    const full = scoreItem(item('x', ['ai', 'agents']), intent, [], NOW);
+    const none = scoreItem(item('x', ['cooking']), intent, [], NOW);
+
+    expect(full.scoreParts!.topic).toBe(3);
+    expect(none.scoreParts!.topic).toBe(0);
+    expect(full.score).toBeGreaterThan(none.score);
+  });
+});

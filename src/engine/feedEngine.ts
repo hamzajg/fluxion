@@ -69,13 +69,15 @@ export function scoreItem(
   const freshnessWeight = intent.freshness ?? 0.5;
   const noveltyWeight = intent.novelty ?? 0.5;
 
-  const score =
-    3 * topicScore +
-    2 * engagement +
-    1.5 * fresh * freshnessWeight +
-    1 * novelty * noveltyWeight;
+  const parts = {
+    topic: 3 * topicScore,
+    engagement: 2 * engagement,
+    freshness: 1.5 * fresh * freshnessWeight,
+    novelty: novelty * noveltyWeight,
+  };
+  const score = parts.topic + parts.engagement + parts.freshness + parts.novelty;
 
-  return { item, score, reasons };
+  return { item, score, reasons, scoreParts: parts };
 }
 
 /**

@@ -76,6 +76,31 @@ const byTitleLength: Ranker = (item) => ({
 const feed = rankFeed(items, intent, signals.all(), { ranker: byTitleLength });
 ```
 
+### Agent curation
+
+`Curator` is the agent-facing facade over `FeedService`: bound to an
+`actorId`, it injects the actor into intents automatically, records
+reactions as that actor, and accepts `CurationDirective`s that reshape an
+intent (add/remove topics, exclude tags, tune freshness/novelty) without
+mutating it.
+
+```ts
+import { Curator } from 'fluxion';
+
+const curator = new Curator(feedService, 'agent-1');
+
+// Shape the intent, then rank.
+const feed = curator.rank(intent, { addTopics: ['agents'], freshness: 0.8 });
+
+// React on a reader's behalf — attributed to 'agent-1', so per-reader
+// ranking stays correct.
+curator.react('a', 'save');
+curator.react('b', 'skip');
+```
+
+`applyDirective(intent, directive)` is exported for callers that want the
+pure transform alone.
+
 ### Persistence
 
 Both stores serialize to plain JSON-safe data. `FeedService.snapshot()` captures
@@ -101,9 +126,9 @@ npm run build     # tsc -> dist/
 
 ## Status
 
-Early. The ranking core, pluggable rankers, signal store, and JSON
-snapshot/restore persistence are implemented and tested; an HTTP surface is
-next.
+Early. The ranking core, pluggable rankers, signal store, JSON
+snapshot/restore persistence, and the `Curator` agent facade are
+implemented and tested; an HTTP surface is next.
 
 ## License
 

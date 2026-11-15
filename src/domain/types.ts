@@ -77,3 +77,21 @@ export interface RankOptions {
   /** Custom scorer. Defaults to the built-in weighted scorer (`scoreItem`). */
   ranker?: Ranker;
 }
+
+/**
+ * A curation directive: how an agent (or caller) wants to adjust an
+ * intent before ranking — without mutating the intent itself.
+ * Applied by `applyDirective` / `Curator.rank`.
+ */
+export interface CurationDirective {
+  /** Topics to add to `intent.topics` (deduped, case-insensitive). */
+  addTopics?: string[];
+  /** Topics to remove from `intent.topics`. */
+  removeTopics?: string[];
+  /** Tags to add to `intent.excludeTags` (union, deduped). */
+  excludeTags?: string[];
+  /** Override `intent.freshness` (0..1). */
+  freshness?: number;
+  /** Override `intent.novelty` (0..1). */
+  novelty?: number;
+}

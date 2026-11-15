@@ -16,7 +16,8 @@ src/index.ts            barrel — the only import surface
          ├─ feedEngine.ts    rankFeed(items, intent, signals) → ranked feed  [pure]
          ├─ signalStore.ts   SignalStore — record/all, in-memory
          ├─ contentStore.ts  ContentStore — add/get, in-memory
-         └─ feedService.ts   FeedService — façade: addContent, recordSignal, rank
+         ├─ feedService.ts   FeedService — façade: addContent, recordSignal, rank
+         └─ curator.ts       Curator + applyDirective — agent-facing facade
 ```
 
 ## Ranking pipeline (`rankFeed`)
@@ -40,9 +41,24 @@ embedding fluxion own durability (the `persistence` test documents the
 expected usage pattern). This is deliberate: the core stays embeddable and
 dependency-free.
 
+## Agent curation (`curator.ts`)
+
+`Curator` wraps a `FeedService` with an optional `actorId`:
+
+- `rank(intent, directive?, options?)` — applies a `CurationDirective`
+  (pure `applyDirective`: add/remove topics, union excludeTags, override
+  freshness/novelty) then ranks; the curator's `actorId` fills
+  `intent.actorId` unless the caller set one.
+- `react(contentId, kind, at?)` — records a `Signal` attributed to the
+  curator's actor, so per-reader ranking stays correct.
+
+This is the seam where an external agent plugs in: it shapes intents and
+reacts on a reader's behalf without touching stores or the engine.
+
 ## Public API surface
 
 Everything exported from `src/index.ts`: all domain types plus
-`rankFeed`, `SignalStore`, `ContentStore`, `FeedService`. Semver starts at
+`rankFeed`, `SignalStore`, `ContentStore`, `FeedService`, `Curator`,
+`applyDirective`. Semver starts at
 0.1.0 — the API is still allowed to move, but breaking changes should be
 deliberate and documented in the PR.

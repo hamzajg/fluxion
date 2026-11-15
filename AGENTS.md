@@ -36,6 +36,9 @@ No lint/format tooling configured. No env vars, no services.
 - `src/engine/contentStore.ts` — in-memory content store (`ContentStore`).
 - `src/engine/feedService.ts` — `FeedService` façade composing the stores
   and engine; the main public API.
+- `src/engine/curator.ts` — `Curator` + `applyDirective`: the
+  agent-facing facade (actor-scoped signals, `CurationDirective` intent
+  shaping). See ADR 0002.
 - `src/index.ts` — barrel re-export (`export *`); everything public goes
   through here.
 - `tests/` — vitest suites per module (`feedEngine`, `feedService`,
